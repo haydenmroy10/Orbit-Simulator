@@ -13,9 +13,12 @@ sim_duration = float(input("Enter simulation duration in Years: "))
 # Initial conditions
 earth_position = [0.0, 0.0]  #List containing x and y coordinates of the Earth
 earth_velocity = [0.0, 0.0]  # Initial velocity of Earth (m/s)
+
 moon_position = [384.4e6, 0.0]  # Initial position of Moon (m)
 moon_velocity = [0.0, 1022.0]  #Initial X and Y velocities of the moon in (m/s)
 
+earth_acceleration = [0.0, 0.0]
+moon_acceleration = [0.0, 0.0]
 # Time parameters
 dt = 1000.0  # Time step in seconds
 t = 0  #Time elapsed in simulation
@@ -34,6 +37,7 @@ def Euler():
         ry = moon_position[1] - earth_position[1]
         r = (rx**2 + ry**2)**0.5
         
+        
         # Calculate gravitational forces
         force_on_earth = [GRAV_CONSTANT / r**2 * rx / r, GRAV_CONSTANT / r**2 * ry / r]
         force_on_moon = [-GRAV_CONSTANT / r**2 * rx / r, -GRAV_CONSTANT / r**2 * ry / r]
@@ -41,6 +45,7 @@ def Euler():
         
         earth_position[0] += earth_velocity[0] * dt
         earth_position[1] += earth_velocity[1] * dt
+        
         earth_velocity[0] += force_on_earth[0] / mass_earth * dt
         earth_velocity[1] += force_on_earth[1] / mass_earth * dt
         
@@ -58,15 +63,71 @@ def Euler():
         
         #increments time
         t += dt
+    
+    #Plot creation
+    plt.figure(figsize=(8, 8))
+    plt.plot([pos[0] for pos in earth_coordinates], [pos[1] for pos in earth_coordinates], label='Earth')
+    plt.plot([pos[0] for pos in moon_coordinates], [pos[1] for pos in moon_coordinates], label='Moon')
+    plt.title('Earth and Moon Orbit Simulation using Euler\'s Method')
+    plt.xlabel('X Position (m)')
+    plt.ylabel('Y Position (m)')
+    plt.legend()
+    plt.show()
         
-Euler()
-
-#Plot creation
-plt.figure(figsize=(8, 8))
-plt.plot([pos[0] for pos in earth_coordinates], [pos[1] for pos in earth_coordinates], label='Earth')
-plt.plot([pos[0] for pos in moon_coordinates], [pos[1] for pos in moon_coordinates], label='Moon')
-plt.title('Earth and Moon Orbit Simulation using Euler\'s Method')
-plt.xlabel('X Position (m)')
-plt.ylabel('Y Position (m)')
-plt.legend()
-plt.show()
+    
+def Verlet():
+    t = 0
+    dt = 1000
+    while t < sim_duration * 31536000:
+        
+        #Adds earth and moon position to list of coordinates
+        earth_coordinates.append(earth_position.copy())
+        moon_coordinates.append(moon_position.copy())
+        
+        # Calculate the distance between Earth and Moon
+        rx = moon_position[0] - earth_position[0]
+        ry = moon_position[1] - earth_position[1]
+        r = (rx**2 + ry**2)**0.5
+        
+        # Calculate gravitational forces
+        
+        force_on_earth = [GRAV_CONSTANT / r**2 * rx / r, GRAV_CONSTANT / r**2 * ry / r]  
+        force_on_moon = [-GRAV_CONSTANT / r**2 * rx / r, -GRAV_CONSTANT / r**2 * ry / r]
+        
+        #Calculate the acceleration of the Earth and Moon a = F / m
+        earth_acceleration = [force_on_earth[0] / mass_earth, force_on_earth[1] / mass_earth]
+        moon_acceleration = [-force_on_moon[0] / mass_moon, -force_on_moon[1] / mass_moon]
+        
+        #Calculate new position of the Earth and Moon
+        earth_position[0] = earth_position[0] + earth_velocity[0] * dt + 0.5 * earth_acceleration[0] * dt ** 2
+        earth_position[1] = earth_position[1] + earth_velocity[1] * dt + 0.5 * earth_acceleration[1] * dt ** 2
+        
+        moon_position[0] = moon_position[0] + moon_velocity[0] * dt + 0.5 * moon_acceleration[0] * dt ** 2
+        moon_position[1] = moon_position[1] + moon_velocity[1] * dt + 0.5 * moon_acceleration[1] * dt ** 2
+        
+        #Update velocity of the Earth and Moon
+        earth_velocity[0] += 0.5 * (earth_acceleration[0] + moon_acceleration[0]) * dt
+        earth_velocity[1] += 0.5 * (earth_acceleration[1] + moon_acceleration[1]) * dt
+        
+        moon_velocity[0] += 0.5 * (earth_acceleration[0] + moon_acceleration[0]) * dt
+        moon_velocity[1] += 0.5 * (earth_acceleration[1] + moon_acceleration[1]) * dt
+        
+        #Increments time
+        t += dt
+    
+    plt.figure(figsize=(8, 8))
+    plt.plot([pos[0] for pos in earth_coordinates], [pos[1] for pos in earth_coordinates], label='Earth')
+    plt.plot([pos[0] for pos in moon_coordinates], [pos[1] for pos in moon_coordinates], label='Moon')
+    plt.title('Earth and Moon Orbit Simulation using Velocity Verlet Method')
+    plt.xlabel('X Position (m)')
+    plt.ylabel('Y Position (m)')
+    plt.legend()
+    plt.show()
+    
+integration = int(input("Enter method of integration 1) Euler 2) Velocity Verlet "))
+if integration == 1:
+    Euler()
+elif integration == 2:
+    Verlet()
+else:
+    print("Invalid Input")
